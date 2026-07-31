@@ -118,6 +118,17 @@ main { padding: 32px 20px 60px; max-width: 680px; margin: 0 auto; }
 .product-option.product-all input:checked + label { border-style: solid; border-color: var(--accent2); background: color-mix(in srgb, var(--accent2) 14%, var(--surface2)); }
 .product-option.product-all input:checked + label::before { background-color: var(--accent2); border-color: var(--accent2); }
 
+.arr-row { display: flex; align-items: center; gap: 10px; }
+.arr-row input[type="text"] { flex: 1; }
+.arr-scope { display: flex; gap: 6px; flex-shrink: 0; }
+.arr-opt {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+  font-size: 0.8rem; font-weight: 600; color: var(--muted); margin: 0; transition: all .15s;
+}
+.arr-opt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface2)); color: var(--text); }
+.arr-opt input { accent-color: var(--accent); }
+
 .checkbox-row { display: flex; align-items: flex-start; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 4px; }
 .checkbox-row input { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
 .checkbox-row label { font-size: 0.82rem; color: var(--text); font-weight: 500; cursor: pointer; }
@@ -213,6 +224,43 @@ main { padding: 32px 20px 60px; max-width: 680px; margin: 0 auto; }
 
     <div class="two-col">
       <div class="field">
+        <label>Enterprise ID<span class="req">*</span></label>
+        <input type="text" id="enterpriseId" placeholder="e.g. 00d2aafe9" oninput="validateForm()">
+      </div>
+      <div class="field">
+        <label>Enterprise Name<span class="req">*</span></label>
+        <input type="text" id="enterpriseName" placeholder="Enterprise name" oninput="validateForm()">
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Team ID<span class="req">*</span></label>
+        <input type="text" id="teamId" placeholder="Team ID" oninput="validateForm()">
+      </div>
+      <div class="field">
+        <label>Team Name<span class="req">*</span></label>
+        <input type="text" id="teamName" placeholder="Team name" oninput="validateForm()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Contracted ARR<span class="req">*</span></label>
+      <div class="arr-row">
+        <input type="text" id="contractedArr" placeholder="e.g. $50,000" oninput="validateForm()">
+        <div class="arr-scope">
+          <label class="arr-opt">
+            <input type="radio" name="arrScope" value="ENT" onchange="validateForm()"> ENT
+          </label>
+          <label class="arr-opt">
+            <input type="radio" name="arrScope" value="Team" onchange="validateForm()"> Team
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
         <label>Root Cause / Responsible Team<span class="req">*</span></label>
         <select id="responsibleTeam" onchange="validateForm()">
           <option value="">Select team</option>
@@ -277,7 +325,6 @@ main { padding: 32px 20px 60px; max-width: 680px; margin: 0 auto; }
       <div class="field">
         <label>CC (email)</label>
         <input type="email" id="ccContact" placeholder="Optional - email to CC" oninput="validateForm()">
-        <div class="hint">ranbir.manoranjan@spyne.ai is always CC'd.</div>
       </div>
     </div>
 
@@ -387,6 +434,12 @@ function validateForm() {
   const requesterName = document.getElementById('requesterName').value.trim();
   const requesterTeam = document.getElementById('requesterTeam').value.trim();
   const reason = document.getElementById('reason').value.trim();
+  const enterpriseId = document.getElementById('enterpriseId').value.trim();
+  const enterpriseName = document.getElementById('enterpriseName').value.trim();
+  const teamId = document.getElementById('teamId').value.trim();
+  const teamName = document.getElementById('teamName').value.trim();
+  const contractedArr = document.getElementById('contractedArr').value.trim();
+  const arrScope = document.querySelector('input[name="arrScope"]:checked');
   const responsibleTeam = document.getElementById('responsibleTeam').value;
   const vinCount = parseInt(document.getElementById('vinCount').value, 10);
   const criticality = document.querySelector('input[name="criticality"]:checked');
@@ -397,7 +450,9 @@ function validateForm() {
   const ccOk = ccContact === '' || isEmail(ccContact);
   const productsOk = getSelectedProducts() !== '';
 
-  const valid = requesterName && requesterTeam && reason && responsibleTeam &&
+  const valid = requesterName && requesterTeam && reason &&
+                enterpriseId && enterpriseName && teamId && teamName &&
+                contractedArr && arrScope && responsibleTeam &&
                 vinCount > 0 && productsOk && criticality && managerOk && ccOk;
 
   document.getElementById('submitBtn').disabled = !valid;
@@ -463,6 +518,12 @@ async function submitRequest() {
   const requesterTeam = document.getElementById('requesterTeam').value.trim();
   const reason = document.getElementById('reason').value.trim();
   const responsibleTeam = document.getElementById('responsibleTeam').value;
+  const enterpriseId = document.getElementById('enterpriseId').value.trim();
+  const enterpriseName = document.getElementById('enterpriseName').value.trim();
+  const teamId = document.getElementById('teamId').value.trim();
+  const teamName = document.getElementById('teamName').value.trim();
+  const contractedArr = document.getElementById('contractedArr').value.trim();
+  const arrScope = (document.querySelector('input[name="arrScope"]:checked') || {}).value || '';
   const vinCount = parseInt(document.getElementById('vinCount').value, 10);
   const criticality = document.querySelector('input[name="criticality"]:checked').value;
   const managerName = document.getElementById('managerName').value.trim();
@@ -482,6 +543,8 @@ async function submitRequest() {
 
   currentRequest = {
     requestId, requesterName, requesterTeam, reason, responsibleTeam,
+    enterpriseId, enterpriseName, teamId, teamName,
+    contractedArr, arrScope,
     vinCount, products, criticality, managerName, cc: ccContact,
     estimatedHours: estimateHours(vinCount),
   };
