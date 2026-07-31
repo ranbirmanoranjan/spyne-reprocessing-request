@@ -208,11 +208,15 @@ main { padding: 32px 20px 60px; max-width: 680px; margin: 0 auto; }
         <input type="text" id="requesterName" placeholder="Your full name" oninput="validateForm()">
       </div>
       <div class="field">
-        <label>Your Team / Department<span class="req">*</span></label>
-        <select id="requesterTeam" onchange="validateForm()">
-          <option value="">Select team</option>
-        </select>
+        <label>Requester Email<span class="req">*</span></label>
+        <input type="email" id="requesterEmail" placeholder="you@spyne.ai" oninput="validateForm()">
       </div>
+    </div>
+    <div class="field">
+      <label>Your Team / Department<span class="req">*</span></label>
+      <select id="requesterTeam" onchange="validateForm()">
+        <option value="">Select team</option>
+      </select>
     </div>
 
     <div class="section-label">Reprocessing Details</div>
@@ -432,6 +436,7 @@ function getSelectedProducts() {
 
 function validateForm() {
   const requesterName = document.getElementById('requesterName').value.trim();
+  const requesterEmail = document.getElementById('requesterEmail').value.trim();
   const requesterTeam = document.getElementById('requesterTeam').value.trim();
   const reason = document.getElementById('reason').value.trim();
   const enterpriseId = document.getElementById('enterpriseId').value.trim();
@@ -447,10 +452,11 @@ function validateForm() {
   const ccContact = document.getElementById('ccContact').value.trim();
 
   const managerOk = isEmail(managerName);
+  const requesterEmailOk = isEmail(requesterEmail);
   const ccOk = ccContact === '' || isEmail(ccContact);
   const productsOk = getSelectedProducts() !== '';
 
-  const valid = requesterName && requesterTeam && reason &&
+  const valid = requesterName && requesterEmailOk && requesterTeam && reason &&
                 enterpriseId && enterpriseName && teamId && teamName &&
                 contractedArr && arrScope && responsibleTeam &&
                 vinCount > 0 && productsOk && criticality && managerOk && ccOk;
@@ -458,7 +464,9 @@ function validateForm() {
   document.getElementById('submitBtn').disabled = !valid;
 
   let note = 'Fill in all required fields to continue.';
-  if (managerName && !managerOk) note = 'Enter a valid manager email address.';
+  if (requesterEmail && !requesterEmailOk) note = 'Enter a valid requester email address.';
+  else if (contractedArr && !arrScope) note = 'Select ENT or Team for Contracted ARR.';
+  else if (managerName && !managerOk) note = 'Enter a valid manager email address.';
   else if (ccContact && !ccOk) note = 'Enter a valid CC email address (or leave it blank).';
   else if (valid) note = 'All required fields are filled in.';
   document.getElementById('validationNote').textContent = note;
@@ -515,6 +523,7 @@ async function submitRequest() {
   if (!validateForm()) return;
 
   const requesterName = document.getElementById('requesterName').value.trim();
+  const requesterEmail = document.getElementById('requesterEmail').value.trim();
   const requesterTeam = document.getElementById('requesterTeam').value.trim();
   const reason = document.getElementById('reason').value.trim();
   const responsibleTeam = document.getElementById('responsibleTeam').value;
@@ -542,7 +551,7 @@ async function submitRequest() {
   if (idResp && idResp.requestId) requestId = idResp.requestId;
 
   currentRequest = {
-    requestId, requesterName, requesterTeam, reason, responsibleTeam,
+    requestId, requesterName, requesterEmail, requesterTeam, reason, responsibleTeam,
     enterpriseId, enterpriseName, teamId, teamName,
     contractedArr, arrScope,
     vinCount, products, criticality, managerName, cc: ccContact,
